@@ -10,7 +10,7 @@ st.write("Search and explore NR data providing a site ID.")
 # Button to refresh data
 if st.button('Refresh Data'):
     st.cache_data.clear()  # Clears the cache
-    st.experimental_rerun()  # Forces a script re-run to reload the data
+    st.rerun()  # Forces a script re-run to reload the data
 
 # Replace this with your shared link
 shared_link = "https://1drv.ms/x/c/e9d2c9c9c1997df7/ETjIp_jnagZOiSoc6nOXDoMBipfwxe5muyD-TW009pwEeA?download=1"
