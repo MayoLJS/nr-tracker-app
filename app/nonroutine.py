@@ -1,7 +1,8 @@
-import requests  # Import the requests library
-from io import BytesIO  # Import BytesIO for handling in-memory files
-import pandas as pd  # Import pandas for data handling
+
 import streamlit as st
+import pandas as pd
+import requests
+from io import BytesIO
 import plotly.express as px
 import plotly.graph_objects as go
 from hashlib import sha256
@@ -52,19 +53,25 @@ def load_data(shared_link: str):
             # Merge tables on 'ihs_id'
             merged_data = pd.merge(ihs_nr_data, ihs_matrix, on="ihs_id", how="inner")
 
+            # Ensure 'revenue_month' is datetime and handle invalid dates
+            merged_data['revenue_month'] = pd.to_datetime(merged_data['revenue_month'], errors='coerce')
+
             # Specify the list of desired columns
             columns_to_select = [
                 "request_date", "alt_id", "ihs_id", "Regional Manager", 
                 "Zonal Coordinator", "region", "job_type", "requirement", "qty", "unit", 
                 "total", "approval", "approval_date", "job_status", "closure_date", 
                 "execution", "payment_ref", "executor", "qty_used", "unit_used", 
-                "expense", "profit", "reference"
+                "expense", "profit", "revenue_month", "reference"
             ]
-
+            
             # Filter the dataframe to keep only the specified columns
             filtered_data = merged_data[columns_to_select]
 
-            return filtered_data  # Return the filtered dataframe
+            # Convert 'request_date' to datetime
+            filtered_data['request_date'] = pd.to_datetime(filtered_data['request_date'], errors='coerce')
+
+            return filtered_data
         except Exception as e:
             st.error(f"An error occurred while processing the data: {e}")
             return None
@@ -79,24 +86,19 @@ shared_link = "https://1drv.ms/x/c/e9d2c9c9c1997df7/ETjIp_jnagZOiSoc6nOXDoMBipfw
 # Call the function to load the data
 df = load_data(shared_link)
 
-
 #####################################################
 ########## UI
 #####################################################
 
 st.title('💼 Non Routine')
 
-# Configuration Filters
 with st.expander('**Filters**', icon='⚙️'):
-    id_filter, ihs_filter, req_filter, job_status_filter, reference_filter, region_filter, date_filter = st.columns(7, gap='medium')
+    id_filter, ihs_filter, req_filter, job_status_filter, reference_filter, region_filter, date_filter, revenue_month_filter = st.columns(8, gap='medium')
 
     # Alt ID Search box (using text_input for dynamic filtering)
     with id_filter:
         search_text = st.text_input('Search alt_id', '').strip()
-        if search_text:
-            filtered_df = df[df['alt_id'].str.contains(search_text, case=False, na=False)]
-        else:
-            filtered_df = df  # Show full table when no filter is applied
+        filtered_df = df[df['alt_id'].str.contains(search_text, case=False, na=False)] if search_text else df
 
     # IHS ID Filter
     with ihs_filter:
@@ -125,33 +127,43 @@ with st.expander('**Filters**', icon='⚙️'):
 
     # Date Filter
     with date_filter:
-        min_date = filtered_df['request_date'].min().date()
-        max_date = filtered_df['request_date'].max().date()
+        if not filtered_df['request_date'].isna().all():
+            min_date = filtered_df['request_date'].min().date()
+            max_date = filtered_df['request_date'].max().date()
 
-        # Date inputs for start and end date
-        selected_start_date = st.date_input(
-            'Start Date', min_value=min_date, max_value=max_date, value=min_date
-        )
-        selected_end_date = st.date_input(
-            'End Date', min_value=min_date, max_value=max_date, value=max_date
-        )
+            # Date inputs for start and end date
+            selected_start_date = st.date_input('Start Date', min_value=min_date, max_value=max_date, value=min_date)
+            selected_end_date = st.date_input('End Date', min_value=min_date, max_value=max_date, value=max_date)
+        else:
+            selected_start_date, selected_end_date = None, None
+
+    # Revenue Month Filter
+    with revenue_month_filter:
+        if 'revenue_month' in filtered_df and filtered_df['revenue_month'].notna().any():
+            # Convert `revenue_month` to Period (e.g., 'YYYY-MM') for chronological sorting
+            filtered_df['revenue_month_period'] = filtered_df['revenue_month'].dt.to_period('M')
+            
+            # Sort options chronologically and convert to string for display
+            revenue_month_options = (
+                sorted(filtered_df['revenue_month_period'].unique())  # Sort Periods chronologically
+            )
+            revenue_month_options_str = [str(option) for option in revenue_month_options]  # Convert to strings
+            
+            # Create the selectbox with sorted options
+            selected_revenue_month = st.selectbox('Select Revenue Month', [''] + revenue_month_options_str)
+        else:
+            selected_revenue_month = ''
 
     # Clear Filters Button
     if st.button("Clear Filters"):
-        search_text = ""
-        selected_ihs_id = ''
-        selected_req = ''
-        selected_status = ''
-        selected_ref = ''
-        selected_region = ''
-        selected_start_date = min_date
-        selected_end_date = max_date
-        st.rerun()  # Reload the app to reset all filters
-    
+        search_text, selected_ihs_id, selected_req = '', '', ''
+        selected_status, selected_ref, selected_region = '', '', ''
+        selected_start_date, selected_end_date, selected_revenue_month = None, None, ''
+        st.rerun()
+
     # Reload Data Button
     if st.button('Reload new data'):
-        st.cache_data.clear()  # Clears the cache
-
+        st.cache_data.clear()
 
 # Apply Filters to DataFrame
 if selected_ihs_id:
@@ -166,11 +178,15 @@ if selected_region:
     filtered_df = filtered_df[filtered_df['region'] == selected_region]
 
 # Apply Date Range Filter
-filtered_df = filtered_df[
-    (filtered_df['request_date'].dt.date >= selected_start_date) & 
-    (filtered_df['request_date'].dt.date <= selected_end_date)
-]
+if selected_start_date and selected_end_date:
+    filtered_df = filtered_df[
+        (filtered_df['request_date'].dt.date >= selected_start_date) & 
+        (filtered_df['request_date'].dt.date <= selected_end_date)
+    ]
 
+# Apply Revenue Month Filter
+if selected_revenue_month:
+    filtered_df = filtered_df[filtered_df['revenue_month'].dt.to_period('M').astype(str) == selected_revenue_month]
 
 # Metrics Display
 row_metrics = st.columns(2)
