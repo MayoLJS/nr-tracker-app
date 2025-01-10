@@ -1,6 +1,39 @@
 import pandas as pd
 import requests
 import streamlit as st
+from hashlib import sha256
+
+# Authentication Setup
+def authenticate_user():
+    # Username and Password inputs
+    st.session_state.username = st.text_input("Username", value="", type="default")
+    st.session_state.password = st.text_input("Password", value="", type="password")
+
+    # Login Button
+    if st.button("Login"):
+        if st.session_state.username and st.session_state.password:
+            # Simple password hash check for demonstration
+            hash_password = sha256(st.session_state.password.encode()).hexdigest()
+            # Replace with actual user authentication logic
+            if st.session_state.username == "admin" and hash_password == sha256("Olivia20$".encode()).hexdigest():
+                st.session_state.authenticated = True
+            else:
+                st.session_state.authenticated = False
+                st.error("Invalid username or password")
+        else:
+            st.error("Please enter both username and password.")
+
+# Initialize session state
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+# If not authenticated, show the login form
+if not st.session_state.authenticated:
+    st.title("Login to View Data")
+    authenticate_user()
+    st.stop()  # Stop execution if the user is not authenticated
+
+# If authenticated, continue with the rest of the app
 
 # Set up Streamlit interface
 st.title("🔍 IHS Pricebook Search")  # Streamlit: Add title with an icon
@@ -24,7 +57,7 @@ def load_data(shared_link: str):  # Function to load data from the shared link
             engine="openpyxl"
         )
         # Select relevant columns
-        df = df[['fault', 'Approval', 'Severity', 'Essense']]
+        df = df[['fault', 'Approval', 'InHouse', 'Severity', 'Essense']]
         return df
     else:
         st.write("❌ Failed to download the file. Check your shared link.")
