@@ -90,7 +90,7 @@ df = load_data(shared_link)
 ########## UI
 #####################################################
 
-st.title('💼 Non Routine')
+st.title('💼 Non Routine - IHS')
 
 with st.expander('**Filters**', icon='⚙️'):
     id_filter, ihs_filter, req_filter, job_status_filter, reference_filter, region_filter, date_filter, revenue_month_filter = st.columns(8, gap='medium')
@@ -188,6 +188,17 @@ if selected_start_date and selected_end_date:
 if selected_revenue_month:
     filtered_df = filtered_df[filtered_df['revenue_month'].dt.to_period('M').astype(str) == selected_revenue_month]
 
+
+
+
+
+
+
+
+
+
+
+
 # Metrics Display
 row_metrics = st.columns(2)
 Job_Count = len(filtered_df)
@@ -207,6 +218,13 @@ with row_metrics[1]:
         st.metric('Profit', f"{Profit_perc:.2f}%", delta=f"{delta_profit:.2f}%")
 
 
+
+
+
+
+
+
+
 # Display Dataframe
 if filtered_df is not None:
     st.dataframe(filtered_df, hide_index=True)
@@ -214,17 +232,94 @@ else:
     st.write("No data to display.")
 
 
-# Charts Display
-charts = st.columns(2)
 
-# Aggregate Data for Charts
-count_by_month = filtered_df.groupby('request_date').agg(Count=('alt_id', 'count')).reset_index()
-count_by_region = filtered_df.groupby('region').agg(Count=('alt_id', 'count')).reset_index()
-count_by_job_type = filtered_df.groupby('job_type').agg(Count=('alt_id', 'count')).reset_index()
+
+
+
+
+
+
+# Keep a copy of the original dataframe for the last four charts
+df_for_last_charts = filtered_df.copy()
+
+# Filter out NaT values from revenue_month for proper date representation for the first two charts only
+filtered_df = filtered_df[filtered_df['revenue_month'].notna()]
+
+# Aggregate Total Revenue for the first two charts
+revenue_by_month = filtered_df.groupby('revenue_month').agg(Total_Revenue=('total', 'sum')).reset_index()
+
+# Profit Percentage Calculation
+revenue_by_month['Profit_Percentage'] = (revenue_by_month['Total_Revenue'] - 
+                                          filtered_df.groupby('revenue_month')['expense'].sum().values) / revenue_by_month['Total_Revenue'] * 100
+
+
+
+fig_total_revenue = go.Figure(go.Bar(
+    x=revenue_by_month['revenue_month'],
+    y=revenue_by_month['Total_Revenue'],
+    name='Total Revenue',
+    marker_color='royalblue'  
+))
+# Update Layout for Total Revenue Bar Chart
+fig_total_revenue.update_layout(
+    title="Total Revenue by Month",
+    xaxis_title="Month",
+    yaxis_title="Total Revenue (in millions)",
+    template="plotly_dark"
+)
+
+# Display the Total Revenue Bar Chart
+with st.container():
+    st.plotly_chart(fig_total_revenue, use_container_width=True)
+
+
+
+
+fig_profit_percentage = go.Figure(go.Scatter(
+    x=revenue_by_month['revenue_month'],
+    y=revenue_by_month['Profit_Percentage'],
+    name='Profit Percentage',
+    mode='lines+markers',
+    marker_color='maroon'
+))
+
+# Add Target Line at 35% Profit Percentage
+fig_profit_percentage.add_shape(
+    type="line",
+    x0=revenue_by_month['revenue_month'].min(),  # Start of the line (minimum revenue_month)
+    x1=revenue_by_month['revenue_month'].max(),  # End of the line (maximum revenue_month)
+    y0=35,  # Y-value for the target (35%)
+    y1=35,  # Y-value for the target (35%)
+    line=dict(
+        color="royalblue",  # Line color
+        width=2,  # Line width
+        dash="dash",  # Dashed line
+    ),
+)
+
+# Update Layout for Profit Percentage Line Chart
+fig_profit_percentage.update_layout(
+    title="Profit Percentage by Month",
+    xaxis_title="Month",
+    yaxis_title="Profit Percentage",
+    template="plotly_dark"
+)
+
+# Display the Profit Percentage Line Chart
+with st.container():
+    st.plotly_chart(fig_profit_percentage, use_container_width=True)
+    
+
+# Now, for the last four charts, use the original `df_for_last_charts` to avoid any unintended filtering
+
+# Aggregate Data for the other Charts (Job Distribution by Month, Region, Job Type, Closed Jobs)
+count_by_month = df_for_last_charts.groupby('request_date').agg(Count=('alt_id', 'count')).reset_index()
+count_by_region = df_for_last_charts.groupby('region').agg(Count=('alt_id', 'count')).reset_index()
+count_by_job_type = df_for_last_charts.groupby('job_type').agg(Count=('alt_id', 'count')).reset_index()
 
 # Total and Closed Jobs (for the gauge chart)
-total_jobs = len(filtered_df)
-closed_jobs = len(filtered_df[filtered_df['job_status'] == 'Closed'])
+total_jobs = len(df_for_last_charts)
+closed_jobs = len(df_for_last_charts[df_for_last_charts['job_status'] == 'Closed'])
 
 # Chart 1: Amount of Items by Month (Line Chart - Big)
 fig_amount_by_month = px.line(
@@ -267,7 +362,7 @@ fig_closed_jobs = go.Figure(go.Indicator(
     }
 ))
 
-# Layout for the charts
+# Layout for the other charts
 charts_1_2 = st.columns(2)  # For Chart 1 and 2
 charts_3_4 = st.columns(2)  # For Chart 3 and 4
 
