@@ -28,5 +28,10 @@ pricebook_page = st.Page(
     icon = ':material/payments:',
     ) 
 
-selected_page = st.navigation ([nr_page, pricebook_page])
+vendor_pricebook_page = st.Page(
+    './app/pricebook_pub.py',
+    title = 'Price Book for Vendors',
+    icon = ':material/payments:',
+    ) 
+selected_page = st.navigation ([nr_page, pricebook_page, vendor_pricebook_page])
 selected_page.run()
