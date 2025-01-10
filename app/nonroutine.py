@@ -193,8 +193,10 @@ row_metrics = st.columns(2)
 Job_Count = len(filtered_df)
 
 target_profit_perc = 35.0
-Profit = filtered_df['profit'].mean()
-Profit_perc = Profit * 100
+total_revenue = filtered_df['total'].sum()  # Sum of revenue (total)
+total_expense = filtered_df['expense'].sum()  # Sum of expenses (cost)
+total_profit = total_revenue - total_expense
+Profit_perc = (total_profit / total_revenue) * 100
 delta_profit = Profit_perc - target_profit_perc
 
 with row_metrics[0]:
