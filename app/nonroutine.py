@@ -215,7 +215,7 @@ with row_metrics[0]:
         st.metric('Job Count', Job_Count)
 with row_metrics[1]:
     with st.container(border=True):
-        st.metric('Profit', f"{Profit_perc:.2f}%", delta=f"{delta_profit:.2f}%")
+        st.metric('Profit', f"{Profit_perc:.2f}%", delta=f"{delta_profit:.2f}% from target")
 
 
 
