@@ -18,20 +18,34 @@ st.logo('./img/ieng.png')                                                     # 
 ####################################################
 nr_page = st.Page(                                                                 # Navigation
     './app/nonroutine.py',
-    title = 'Non Routine',
+    title = 'Non Routine - IHS',
     icon = ':material/home:',
 )      
 
 pricebook_page = st.Page(
     './app/pricebook.py',
-    title = 'Price Book',
+    title = 'Price Book - IHS',
     icon = ':material/payments:',
     ) 
 
 vendor_pricebook_page = st.Page(
     './app/pricebook_pub.py',
-    title = 'Price Book for Vendors',
+    title = 'Approved Vendor Price',
     icon = ':material/payments:',
     ) 
-selected_page = st.navigation ([nr_page, pricebook_page, vendor_pricebook_page])
+
+atcnr_page = st.Page(                                                                 # Navigation
+    './app/atcnonroutine.py',
+    title = 'Non Routine - ATC',
+    icon = ':material/home:',
+)  
+
+atcpo_page = st.Page(
+    './app/atc_po_reader.py',
+    title = 'ATC POs Reader ',
+    icon = ':material/widget_small:',
+    ) 
+
+
+selected_page = st.navigation ([nr_page, pricebook_page, vendor_pricebook_page, atcnr_page, atcpo_page])
 selected_page.run()
