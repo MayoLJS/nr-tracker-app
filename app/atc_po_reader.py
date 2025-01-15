@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 from tabula.io import read_pdf
 import warnings
+import os
+os.environ['JAVA_HOME'] = '/usr/lib/jvm/java-11-openjdk-amd64'
+os.environ['PATH'] += os.pathsep + os.path.join(os.environ['JAVA_HOME'], 'bin')
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
