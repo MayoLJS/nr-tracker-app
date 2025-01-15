@@ -101,7 +101,13 @@ if uploaded_file is not None:
     if PO_table is not None and not PO_table.empty:
         # Display the extracted table with custom styling
         st.success("📊 Table extracted successfully!")
-        st.dataframe(PO_table.style.highlight_max(axis=0, color='lightblue'))
+        
+        # Highlight numeric columns only
+        numeric_columns = PO_table.select_dtypes(include=['number'])
+        if not numeric_columns.empty:
+            st.dataframe(PO_table.style.highlight_max(axis=0, color='lightblue'))
+        else:
+            st.dataframe(PO_table)  # Display without styling if no numeric columns exist
 
         # Provide an option to download the table as a CSV file
         csv = PO_table.to_csv(index=False).encode('utf-8')
@@ -114,4 +120,3 @@ if uploaded_file is not None:
         )
     else:
         st.warning("❌ No valid data to display or save.")
-
