@@ -14,7 +14,7 @@ def authenticate_user():
     st.session_state.password = st.text_input("Password", value="", type="password")
 
     # Login Button
-    if st.button("Login"):
+    if st.button("Login",key="styled_button",icon=":material/key:"):
         if st.session_state.username and st.session_state.password:
             # Simple password hash check for demonstration
             hash_password = sha256(st.session_state.password.encode()).hexdigest()
@@ -92,78 +92,72 @@ df = load_data(shared_link)
 
 st.title('💼 Non Routine - IHS')
 
-with st.expander('**Filters**', icon='⚙️'):
-    id_filter, ihs_filter, req_filter, job_status_filter, reference_filter, region_filter, date_filter, revenue_month_filter = st.columns(8, gap='medium')
 
-    # Alt ID Search box (using text_input for dynamic filtering)
-    with id_filter:
-        search_text = st.text_input('Search alt_id', '').strip()
-        filtered_df = df[df['alt_id'].str.contains(search_text, case=False, na=False)] if search_text else df
+id_filter, ihs_filter, req_filter, job_status_filter, reference_filter, region_filter, date_filter, revenue_month_filter = st.columns(8, gap='medium')
 
-    # IHS ID Filter
-    with ihs_filter:
-        ihs_options = filtered_df['ihs_id'].unique()
-        selected_ihs_id = st.selectbox('Select IHS ID', [''] + list(ihs_options))
+# Alt ID Search box (using text_input for dynamic filtering)
+with id_filter:
+    search_text = st.text_input('Search alt_id', '').strip()
+    filtered_df = df[df['alt_id'].str.contains(search_text, case=False, na=False)] if search_text else df
 
-    # Requirement Filter
-    with req_filter:
-        req_options = filtered_df['requirement'].unique()
-        selected_req = st.selectbox('Select Requirement', [''] + list(req_options))
+# IHS ID Filter
+with ihs_filter:
+    ihs_options = filtered_df['ihs_id'].unique()
+    selected_ihs_id = st.selectbox('Select IHS ID', [''] + list(ihs_options))
 
-    # Job Status Filter
-    with job_status_filter:
-        status_options = filtered_df['job_status'].unique()
-        selected_status = st.selectbox('Select Job Status', [''] + list(status_options))
+# Requirement Filter
+with req_filter:
+    req_options = filtered_df['requirement'].unique()
+    selected_req = st.selectbox('Select Requirement', [''] + list(req_options))
 
-    # Reference Filter
-    with reference_filter:
-        ref_options = filtered_df['reference'].unique()
-        selected_ref = st.selectbox('Select Reference', [''] + list(ref_options))
+# Job Status Filter
+with job_status_filter:
+    status_options = filtered_df['job_status'].unique()
+    selected_status = st.selectbox('Select Job Status', [''] + list(status_options))
 
-    # Region Filter
-    with region_filter:
-        region_options = filtered_df['region'].unique()
-        selected_region = st.selectbox('Select Region', [''] + list(region_options))
+# Reference Filter
+with reference_filter:
+    ref_options = filtered_df['reference'].unique()
+    selected_ref = st.selectbox('Select Reference', [''] + list(ref_options))
 
-    # Date Filter
-    with date_filter:
-        if not filtered_df['request_date'].isna().all():
-            min_date = filtered_df['request_date'].min().date()
-            max_date = filtered_df['request_date'].max().date()
+# Region Filter
+with region_filter:
+    region_options = filtered_df['region'].unique()
+    selected_region = st.selectbox('Select Region', [''] + list(region_options))
 
-            # Date inputs for start and end date
-            selected_start_date = st.date_input('Start Date', min_value=min_date, max_value=max_date, value=min_date)
-            selected_end_date = st.date_input('End Date', min_value=min_date, max_value=max_date, value=max_date)
-        else:
-            selected_start_date, selected_end_date = None, None
+# Date Filter
+with date_filter:
+    if not filtered_df['request_date'].isna().all():
+        min_date = filtered_df['request_date'].min().date()
+        max_date = filtered_df['request_date'].max().date()
 
-    # Revenue Month Filter
-    with revenue_month_filter:
-        if 'revenue_month' in filtered_df and filtered_df['revenue_month'].notna().any():
-            # Convert `revenue_month` to Period (e.g., 'YYYY-MM') for chronological sorting
-            filtered_df['revenue_month_period'] = filtered_df['revenue_month'].dt.to_period('M')
-            
-            # Sort options chronologically and convert to string for display
-            revenue_month_options = (
-                sorted(filtered_df['revenue_month_period'].unique())  # Sort Periods chronologically
-            )
-            revenue_month_options_str = [str(option) for option in revenue_month_options]  # Convert to strings
-            
-            # Create the selectbox with sorted options
-            selected_revenue_month = st.selectbox('Select Revenue Month', [''] + revenue_month_options_str)
-        else:
-            selected_revenue_month = ''
+        # Date inputs for start and end date
+        selected_start_date = st.date_input('Start Date', min_value=min_date, max_value=max_date, value=min_date)
+        selected_end_date = st.date_input('End Date', min_value=min_date, max_value=max_date, value=max_date)
+    else:
+        selected_start_date, selected_end_date = None, None
 
-    # Clear Filters Button
-    if st.button("Clear Filters"):
-        search_text, selected_ihs_id, selected_req = '', '', ''
-        selected_status, selected_ref, selected_region = '', '', ''
-        selected_start_date, selected_end_date, selected_revenue_month = None, None, ''
-        st.rerun()
+# Revenue Month Filter
+with revenue_month_filter:
+    if 'revenue_month' in filtered_df and filtered_df['revenue_month'].notna().any():
+        # Convert `revenue_month` to Period (e.g., 'YYYY-MM') for chronological sorting
+        filtered_df['revenue_month_period'] = filtered_df['revenue_month'].dt.to_period('M')
+        
+        # Sort options chronologically and convert to string for display
+        revenue_month_options = (
+            sorted(filtered_df['revenue_month_period'].unique())  # Sort Periods chronologically
+        )
+        revenue_month_options_str = [str(option) for option in revenue_month_options]  # Convert to strings
+        
+        # Create the selectbox with sorted options
+        selected_revenue_month = st.selectbox('Select Revenue Month', [''] + revenue_month_options_str)
+    else:
+        selected_revenue_month = ''
 
-    # Reload Data Button
-    if st.button('Reload new data'):
-        st.cache_data.clear()
+
+# Reload Data Button
+if st.button('Reload new data'):
+    st.cache_data.clear()
 
 # Apply Filters to DataFrame
 if selected_ihs_id:
@@ -215,7 +209,21 @@ with row_metrics[0]:
         st.metric('Job Count', Job_Count)
 with row_metrics[1]:
     with st.container(border=True):
-        st.metric('Profit', f"{Profit_perc:.2f}%", delta=f"{delta_profit:.2f}% from target")
+        st.metric('Profit', f"{Profit_perc:.2f}%", delta=f"{delta_profit:.2f}%")
+
+
+
+
+
+
+
+st.markdown('<h1 style="font-size: 30px;">NR</h1>', unsafe_allow_html=True)
+with st.expander('**Data**', icon='📉'):
+    # Display Dataframe
+    if filtered_df is not None:
+        st.dataframe(filtered_df, hide_index=True)
+    else:
+        st.write("No data to display.")
 
 
 
@@ -224,21 +232,7 @@ with row_metrics[1]:
 
 
 
-
-# Display Dataframe
-if filtered_df is not None:
-    st.dataframe(filtered_df, hide_index=True)
-else:
-    st.write("No data to display.")
-
-
-
-
-
-
-
-
-
+st.markdown('<h1 style="font-size: 30px;">Metrics</h1>', unsafe_allow_html=True)
 # Keep a copy of the original dataframe for the last four charts
 df_for_last_charts = filtered_df.copy()
 
