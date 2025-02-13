@@ -40,6 +40,12 @@ atcnr_page = st.Page(                                                           
     icon = ':material/home:',
 )  
 
+atcnrnew_page = st.Page(                                                                 # Navigation
+    './app/atcnonroutine v2.py',
+    title = 'Non Routine - ATC - New RMs',
+    icon = ':material/home:',
+) 
+
 atcpo_page = st.Page(
     './app/atc_po_reader.py',
     title = 'ATC POs Reader ',
@@ -47,5 +53,5 @@ atcpo_page = st.Page(
     ) 
 
 
-selected_page = st.navigation ([nr_page, pricebook_page, vendor_pricebook_page, atcnr_page, atcpo_page])
+selected_page = st.navigation ([nr_page, pricebook_page, vendor_pricebook_page, atcnr_page, atcnrnew_page, atcpo_page])
 selected_page.run()
